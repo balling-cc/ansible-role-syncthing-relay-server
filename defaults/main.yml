@@ -1,0 +1,5 @@
+---
+syncthing_relay_server_download_url: https://build.syncthing.net/job/strelaysrv/lastStableBuild
+syncthing_relay_server_port: 22067
+syncthing_relay_server_status_endpoint_port: 22070
+syncthing_relay_server_pools: ""

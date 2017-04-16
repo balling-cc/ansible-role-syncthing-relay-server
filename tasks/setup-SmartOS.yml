@@ -1,0 +1,83 @@
+---
+- name: Update pkgin cache.
+  shell: pkgin update -f
+
+- name: Ensure python requests is installed.
+  pkgin:
+    name: py27-requests
+    state: present
+
+- name: Copy syncthing relay server version script
+  template:
+    src: get_latest_syncthing_relay_server_version.py.j2
+    dest: /tmp/get_latest_syncthing_relay_server_version.py
+
+- name: Get latest syncthing relay server version
+  command: python /tmp/get_latest_syncthing_relay_server_version.py
+  register: strelaysrv_ver
+  failed_when: strelaysrv_ver.rc > 0
+  changed_when: no
+
+- name: Set latest syncthing relay server version
+  set_fact:
+    syncthing_relay_server_version: "{{ strelaysrv_ver.stdout }}"
+  when: strelaysrv_ver.rc == 0
+
+- name: Check if Syncthing relay server is installed
+  raw: test -f {{ syncthing_relay_server_path }}/strelaysrv
+  register: strelaysrv_file
+  ignore_errors: True
+
+- name: Create Syncthing relay server directory
+  file: path={{ syncthing_relay_server_path }} state=directory owner=root group=root mode=0755
+  when: strelaysrv_file|failed
+
+- name: Download Syncthing relay server
+  get_url:
+    url: "{{ syncthing_relay_server_download_url }}/artifact/{{ syncthing_relay_server_version }}.tar.gz"
+    dest: /tmp/strelaysrv.tar.gz
+    validate_certs: False
+  when: strelaysrv_file|failed
+
+- name: Unpack Syncthing relay server is installed
+  raw: tar xpzf /tmp/strelaysrv.tar.gz -C /tmp/
+  when: strelaysrv_file|failed
+
+- name: Copy Syncthing relay server binary
+  copy:
+    remote_src: True
+    src: "/tmp/{{ syncthing_relay_server_version }}/strelaysrv"
+    dest: "{{ syncthing_relay_server_path }}/strelaysrv"
+    owner: root
+    group: root
+    mode: 0755
+  when: strelaysrv_file|failed
+
+- name: Create script directory
+  file: path=/opt/custom/scripts state=directory
+  when: strelaysrv_file|failed
+
+- name: Create smf directory
+  file: path=/opt/custom/smf state=directory
+  when: strelaysrv_file|failed
+
+- name: Copy syncthing relay server script
+  template:
+    src: syncthing-relay-server.j2
+    dest: /opt/custom/scripts/syncthing-relay-server
+    mode: 0755
+  when: strelaysrv_file|failed
+
+- name: Copy syncthing relay server smf script
+  template:
+    src: syncthing-relay-server.xml.j2
+    dest: /opt/custom/smf/syncthing-relay-server.xml
+  when: strelaysrv_file|failed
+
+- name: Import syncthing relay server smf script
+  raw: svccfg import /opt/custom/smf/syncthing-relay-server.xml 
+  when: strelaysrv_file|failed
+
+- name: Enable syncthing relay server
+  raw: svcadm enable syncthing-relay-server
+  when: strelaysrv_file|failed

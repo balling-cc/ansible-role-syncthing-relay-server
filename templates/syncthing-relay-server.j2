@@ -1,0 +1,7 @@
+#!/usr/bin/sh
+
+. /lib/svc/share/smf_include.sh
+
+{{ syncthing_relay_server_path }}/strelaysrv -listen :{{ syncthing_relay_server_port }} -pools={{ syncthing_relay_server_pools }} -status-srv={{ syncthing_relay_server_status_endpoint_port }}
+ 
+exit $SMF_EXIT_OK

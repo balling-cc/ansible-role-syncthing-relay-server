@@ -1,0 +1,4 @@
+---
+syncthing_relay_server_platform: "solaris-amd64"
+syncthing_relay_server_path: /opt/local/sbin
+syncthing_relay_server_version: strelaysrv-solaris-amd64-v0.14.27-rc.4+12-g57e3f9e

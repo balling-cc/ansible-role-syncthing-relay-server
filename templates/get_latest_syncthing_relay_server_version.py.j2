@@ -1,0 +1,14 @@
+import requests
+import sys
+import re
+
+if (sys.version_info > (3, 0)):
+    from urllib import parse
+    py_ver = 3
+else:
+    from urlparse import urlparse
+    py_ver = 2
+
+r = requests.get("{{ syncthing_relay_server_download_url }}")
+stdiscosrv_ver = 'strelaysrv-{{ syncthing_relay_server_platform }}'+re.split('\.tar\.gz', re.split('"', re.split('artifact/strelaysrv-{{ syncthing_relay_server_platform }}', r.text)[1])[0])[0]
+print(stdiscosrv_ver)
